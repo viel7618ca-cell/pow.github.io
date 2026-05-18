@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Sigil Test - Light Motion Fix</title>
+<title>Sigil Test - Sparkling Motion</title>
 <style>
   body {
-    background: #fff; /* 背景シロ */
+    background: #fff;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -16,7 +16,7 @@
     width: 300px;
   }
   path, circle {
-    stroke: #111; /* 線クロ */
+    stroke: #111;
     fill: none;
     stroke-width: 2;
     stroke-linecap: round;
@@ -25,25 +25,47 @@
     filter: url(#soft-blur);
   }
 
-  /* --- 【修正】光の粒子（黒い点）の設定 --- */
+  /* --- 【修正】メインの光の粒子（シャープに小さく） --- */
   #glow-particle {
-    fill: #111; /* 塗りをクロに */
+    fill: #111;
     stroke: none;
-    opacity: 0; /* 最初は非表示 */
-    
-    /* 動き回るルート（中心100,100 から左に大きく回り込んで 始点100,30 へ） */
+    opacity: 0;
+    /* 中心から左に回り込んで始点（100,30）へ向かう見えない道路 */
     offset-path: path("M 100,100 C 30,130 20,50 100,30");
     offset-rotate: 0deg;
   }
 
-  /* クラスがついたら、即座に表示して1.5秒かけてルートを走り回る */
-  .move-particle {
-    opacity: 0.8 !important; /* バグ修正：確実にハッキリ見えるように強制適用 */
+  /* --- 【新規】追いかけるキラキラ粒子（子） --- */
+  .sparkle {
+    fill: #111;
+    stroke: none;
+    opacity: 0;
+    /* メインと全く同じ道路を敷く */
+    offset-path: path("M 100,100 C 30,130 20,50 100,30");
+    offset-rotate: 0deg;
+  }
+
+  /* --- アニメーション制御（緩急をつけて泳がせる） --- */
+  .move-main {
+    opacity: 0.8 !important;
     transition: offset-distance 1.5s cubic-bezier(0.25, 1, 0.5, 1);
     offset-distance: 100%;
   }
 
-  /* --- 各パーツの出現設定 --- */
+  /* キらキラ粒子：メインよりほんの少しだけ遅れて追従させる */
+  .move-sparkle1 {
+    opacity: 0.5 !important;
+    /* わずかに速度やタイミングを変えて、パラパラした質感にする */
+    transition: offset-distance 1.4s cubic-bezier(0.25, 1, 0.5, 1);
+    offset-distance: 98%;
+  }
+  .move-sparkle2 {
+    opacity: 0.3 !important;
+    transition: offset-distance 1.45s cubic-bezier(0.3, 1, 0.6, 1);
+    offset-distance: 95%;
+  }
+
+  /* --- シジル各パーツ --- */
   .fade-in {
     transition: opacity 0.6s ease;
     opacity: 1;
@@ -75,8 +97,12 @@
     </filter>
   </defs>
 
-  <!-- 【修正】視認性を上げるため、点の半径（r）を少しだけ大きく「6」にしました -->
-  <circle id="glow-particle" r="6" offset-distance="0%" />
+  <!-- 【新規】キラキラの残光粒子（メインの後ろを追うために先に記述） -->
+  <circle id="sparkle2" class="sparkle" r="1.2" offset-distance="0%" />
+  <circle id="sparkle1" class="sparkle" r="1.8" offset-distance="0%" />
+
+  <!-- 【修正】メインの点を半径「2.5」に縮小してシャープに -->
+  <circle id="glow-particle" r="2.5" offset-distance="0%" />
 
   <!-- ①葉っぱ -->
   <circle id="leaf" cx="100" cy="30" r="3" />
@@ -101,6 +127,9 @@
 
 <script>
   const particle = document.getElementById("glow-particle");
+  const sp1 = document.getElementById("sparkle1");
+  const sp2 = document.getElementById("sparkle2");
+  
   const leaf = document.getElementById("leaf");
   const line = document.getElementById("line");
   const end = document.getElementById("end");
@@ -108,36 +137,39 @@
   const symbol2 = document.getElementById("symbol2");
   const outer = document.getElementById("outer");
 
-  // 0.0秒: 黒い点が中央付近に現れ、大きなカーブを描いてシュルッと走り出す
+  // 0.0秒: メインの小さな点と、キラキラたちが時間差でシュルッと泳ぎ出す
   setTimeout(() => {
-    particle.classList.add("move-particle");
+    particle.classList.add("move-main");
+    sp1.classList.add("move-sparkle1");
+    sp2.classList.add("move-sparkle2");
   }, 50);
 
-  // 1.2秒: 点が目的地に届く直前で、始点の葉っぱがふんわり出現
+  // 1.2秒: 目的地に届く直前で始点が出現
   setTimeout(() => {
     leaf.classList.add("fade-in");
   }, 1200);
 
-  // 1.5秒: 点が目的地（始点）に到達すると同時に、フッと消える（残光フェードアウト）
-  // それと入れ替わりで、線がふんわりと伸び始める（ここで綺麗な重なりが発生）
+  // 1.5秒: 目的地に集結した瞬間にすべての光がフッと消え、線がふんわり伸び始める
   setTimeout(() => {
-    particle.style.transition = "opacity 0.4s ease"; // スッと消えるための設定に切り替え
-    particle.style.opacity = "0"; 
+    // まとめてフェードアウト
+    particle.style.transition = sp1.style.transition = sp2.style.transition = "opacity 0.4s ease";
+    particle.style.opacity = sp1.style.opacity = sp2.style.opacity = "0";
+    
     line.classList.add("draw-line"); 
   }, 1500);
 
-  // 3.0秒: 終点〇が出現
+  // 3.0秒: 終点〇
   setTimeout(() => {
     end.classList.add("fade-in");
   }, 3000);
 
-  // 3.2秒: 他の記号が出現
+  // 3.2秒: 他記号
   setTimeout(() => {
     symbol1.classList.add("fade-in");
     symbol2.classList.add("fade-in");
   }, 3200);
 
-  // 3.3秒: 外円が上からぐるっと回り始める
+  // 3.3秒: 外円
   setTimeout(() => {
     outer.classList.add("draw-circle");
   }, 3300);
