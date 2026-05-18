@@ -5,11 +5,12 @@
 <title>Sigil Test</title>
 <style>
   body {
-    background: #111;
+    background: #111; /* 実際は白ベースとのことですが、テスト用に黒のままにしています */
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+    margin: 0;
   }
   svg {
     width: 300px;
@@ -20,7 +21,10 @@
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
+    /* すべての要素に共通の「ふんわり現れる」フェード時間を設定（1.2秒かけてじわっと変化） */
+    transition: opacity 1.2s ease;
   }
+  /* 最初は全員隠しておく */
   .hidden {
     opacity: 0;
   }
@@ -30,22 +34,20 @@
 
 <svg viewBox="0 0 200 200">
 
-  <!-- 葉っぱ -->
+  <!-- ①葉っぱ -->
   <circle id="leaf" cx="100" cy="30" r="3" class="hidden"/>
 
-  <!-- 線 -->
-  <path id="line" d="M100 30 L150 100 L50 150 L120 170" 
-        stroke-dasharray="300"
-        stroke-dashoffset="300" />
+  <!-- ②線（hiddenクラスを追加し、描く設定を削除） -->
+  <path id="line" d="M100 30 L150 100 L50 150 L120 170" class="hidden" />
 
-  <!-- 終点〇 -->
+  <!-- ③終点〇 -->
   <circle id="end" cx="120" cy="170" r="5" class="hidden"/>
 
-  <!-- 他記号 -->
+  <!-- ④他記号 -->
   <circle id="symbol1" cx="150" cy="100" r="4" class="hidden"/>
   <circle id="symbol2" cx="50" cy="150" r="4" class="hidden"/>
 
-  <!-- 外円 -->
+  <!-- ⑤外円 -->
   <circle id="outer" cx="100" cy="100" r="90" class="hidden"/>
 
 </svg>
@@ -58,27 +60,28 @@
   const symbol2 = document.getElementById("symbol2");
   const outer = document.getElementById("outer");
 
+  // タイミングの微調整（前の要素が消えきる前に、次の要素が重なってじわっと現れる時間差にしています）
+  
   // ①葉っぱ
   setTimeout(() => {
     leaf.classList.remove("hidden");
   }, 200);
 
-  // ②線が伸びる
+  // ②線（ふんわり現れる）
   setTimeout(() => {
-    line.style.transition = "stroke-dashoffset 0.5s ease";
-    line.style.strokeDashoffset = "0";
-  }, 400);
+    line.classList.remove("hidden");
+  }, 600);
 
   // ③終点〇
   setTimeout(() => {
     end.classList.remove("hidden");
-  }, 1400);
+  }, 1200);
 
   // ④他記号
   setTimeout(() => {
     symbol1.classList.remove("hidden");
     symbol2.classList.remove("hidden");
-  }, 1700);
+  }, 1600);
 
   // ⑤外円
   setTimeout(() => {
