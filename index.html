@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Sigil Test</title>
+<title>Sigil Test - Fade In</title>
 <style>
   body {
-    background: #111; /* 実際は白ベースとのことですが、テスト用に黒のままにしています */
+    background: #111; /* テスト用に黒のままにしています */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -21,9 +21,31 @@
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    /* すべての要素に共通の「ふんわり現れる」フェード時間を設定（1.2秒かけてじわっと変化） */
-    transition: opacity 1.2s ease;
+    /* 基本のフェード時間は1.2秒に設定 */
+    transition: opacity 1.2s ease, mask-position 1.2s ease-out;
   }
+  
+  /* --- 案A: マスクによる遅延フェード用の設定 --- */
+  #line {
+    /* グラデーションマスクを作成（左側が不透明、右側が透明） */
+    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 60%);
+    mask-image: linear-gradient(to right, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 60%);
+    
+    /* マスクのサイズを線の2倍にして、最初は「透明な部分」だけが見える位置にずらしておく */
+    -webkit-mask-size: 200% 100%;
+    mask-size: 200% 100%;
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+
+  /* マスクが移動して、じわっと現れた状態のクラス */
+  #line.revealed {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+    opacity: 1; /* hiddenクラスと併用するため明示的に指定 */
+  }
+  /* ------------------------------------------- */
+
   /* 最初は全員隠しておく */
   .hidden {
     opacity: 0;
@@ -37,7 +59,7 @@
   <!-- ①葉っぱ -->
   <circle id="leaf" cx="100" cy="30" r="3" class="hidden"/>
 
-  <!-- ②線（hiddenクラスを追加し、描く設定を削除） -->
+  <!-- ②線（hiddenクラスを追加し、mask設定をCSSで行う） -->
   <path id="line" d="M100 30 L150 100 L50 150 L120 170" class="hidden" />
 
   <!-- ③終点〇 -->
@@ -60,33 +82,32 @@
   const symbol2 = document.getElementById("symbol2");
   const outer = document.getElementById("outer");
 
-  // タイミングの微調整（前の要素が消えきる前に、次の要素が重なってじわっと現れる時間差にしています）
-  
-  // ①葉っぱ
+  // ①葉っぱ：スッと現れる
   setTimeout(() => {
     leaf.classList.remove("hidden");
   }, 200);
 
-  // ②線（ふんわり現れる）
+  // ②線：始点から終点へ向かってじわーっとマスクが移動して現れる（一番時間をかける）
   setTimeout(() => {
-    line.classList.remove("hidden");
+    line.classList.remove("hidden"); // opacityを0->1へ
+    line.classList.add("revealed"); // マスクを移動させる（順番に現れる感）
   }, 600);
 
-  // ③終点〇
+  // ③終点〇：線がほぼ現れきったタイミングで
   setTimeout(() => {
     end.classList.remove("hidden");
-  }, 1200);
+  }, 1800); // 線のフェード（1.2s）が終わる頃
 
-  // ④他記号
+  // ④他記号：少し置いてから
   setTimeout(() => {
     symbol1.classList.remove("hidden");
     symbol2.classList.remove("hidden");
-  }, 1600);
+  }, 2200);
 
-  // ⑤外円
+  // ⑤外円：最後に全体を包むように
   setTimeout(() => {
     outer.classList.remove("hidden");
-  }, 2000);
+  }, 2800);
 </script>
 
 </body>
